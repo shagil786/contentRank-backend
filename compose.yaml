@@ -1,0 +1,35 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: outrank-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-outrank}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-outrank_local_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-outrank}
+    ports:
+      - "5433:5432"
+    volumes:
+      - outrank-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: outrank-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - outrank-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  outrank-postgres-data:
+  outrank-redis-data:
