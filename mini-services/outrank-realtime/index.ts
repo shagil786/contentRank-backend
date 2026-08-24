@@ -20,6 +20,8 @@ import { SEED_LOCATIONS } from "./seed";
 // (Redis-equivalent) from PostgreSQL via the Next.js app's leaderboard API.
 // We RETRY until PostgreSQL is available — we never fall back to a static seed,
 // because that would show fake data instead of real backend data.
+const API_BASE_URL = process.env.API_BASE_URL || "http://localhost:3000";
+
 async function hydrateFromPostgres(): Promise<Entity[]> {
   const MAX_RETRIES = 30;
   const RETRY_DELAY = 1000;
@@ -27,7 +29,7 @@ async function hydrateFromPostgres(): Promise<Entity[]> {
     try {
       const ctrl = new AbortController();
       const t = setTimeout(() => ctrl.abort(), 3000);
-      const res = await fetch("http://localhost:3000/api/leaderboard", {
+      const res = await fetch(`${API_BASE_URL}/api/leaderboard`, {
         signal: ctrl.signal,
         cache: "no-store",
       });
@@ -197,7 +199,7 @@ function applyBoost(req: BoostRequest, socketId: string, isSim = false): { ok: b
   if (!isSim) {
     const sessionId = ledgers.get(socketId)?.sessionId;
     if (sessionId) {
-      fetch("http://localhost:3000/api/boosts", {
+      fetch(`${API_BASE_URL}/api/boosts`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -315,7 +317,7 @@ async function addEntity(req: AddEntityRequest, socketId: string): Promise<{ ok:
 
   // 1. persist to PostgreSQL via the application layer
   try {
-    const apiRes = await fetch("http://localhost:3000/api/content", {
+    const apiRes = await fetch(`${API_BASE_URL}/api/content`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -515,7 +517,7 @@ io.on("connection", (socket) => {
   ledgers.set(socket.id, { handle, location, sessionId: undefined });
 
   // create a PostgreSQL session via the application layer (best-effort, no auth)
-  fetch("http://localhost:3000/api/session", {
+  fetch(`${API_BASE_URL}/api/session`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ handle, location }),

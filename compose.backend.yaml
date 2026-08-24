@@ -20,6 +20,8 @@ services:
       context: .
       dockerfile: Dockerfile.realtime
     env_file: .env
+    environment:
+      API_BASE_URL: http://api:3000
     depends_on:
       redis:
         condition: service_healthy
